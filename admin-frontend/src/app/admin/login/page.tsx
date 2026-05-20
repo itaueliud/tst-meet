@@ -26,7 +26,8 @@ export default function AdminLoginPage() {
       if (apiMessage) {
         toast.error(apiMessage);
       } else {
-        toast.error('Unable to reach backend. Confirm backend is running on http://localhost:3001');
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://tst-meet.onrender.com/api';
+        toast.error(`Unable to reach backend. Confirm API URL is set correctly: ${apiUrl}`);
       }
     } finally { setLoading(false); }
   };
