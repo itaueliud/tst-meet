@@ -217,7 +217,7 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
       </div>
 
       {/* Controls */}
-      <div className="shrink-0" onClick={() => setShowEmojiPicker(false)}>
+      <div className="shrink-0">
         <MeetingControls
           onToggleMute={meeting.toggleMute}
           onToggleCamera={meeting.toggleCamera}

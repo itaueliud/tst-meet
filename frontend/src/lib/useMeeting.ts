@@ -250,6 +250,10 @@ export function useMeeting(meetingId: string, displayName: string, role: string,
 
   const startScreenShare = useCallback(async () => {
     try {
+      if (!navigator.mediaDevices?.getDisplayMedia) {
+        toast.error('Screen sharing is not supported on this device/browser. Use Chrome/Edge.');
+        return;
+      }
       let stream: MediaStream | null = null;
       
       // Try with audio first, then fall back to video only
@@ -261,9 +265,13 @@ export function useMeeting(meetingId: string, displayName: string, role: string,
           stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
         } catch (videoErr) {
           console.error('Screen share failed:', videoErr);
-          const errorMsg = videoErr instanceof DOMException 
-            ? (videoErr.name === 'NotAllowedError' ? 'You denied screen share permission' : videoErr.message)
-            : 'Screen share is unavailable on this browser/device';
+          const errorMsg = videoErr instanceof DOMException
+            ? (videoErr.name === 'NotAllowedError'
+              ? 'You denied screen share permission'
+              : videoErr.name === 'NotSupportedError'
+                ? 'Screen sharing is not supported on this device/browser. Use Chrome/Edge.'
+                : videoErr.message)
+            : 'Screen sharing is unavailable on this browser/device';
           toast.error(errorMsg);
           return;
         }
