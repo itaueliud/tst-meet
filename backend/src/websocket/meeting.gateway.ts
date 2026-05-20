@@ -15,7 +15,7 @@ import { Logger } from '@nestjs/common';
   cors: {
     origin: process.env.FRONTEND_URL
       ? process.env.FRONTEND_URL.split(',').map((origin) => origin.trim()).filter(Boolean)
-      : ['http://localhost:3000', 'http://localhost:3002'],
+      : ['http://localhost:3000', 'http://localhost:3002', 'http://localhost:3003'],
     credentials: true,
   },
   namespace: '/meeting',
@@ -59,6 +59,13 @@ export class MeetingGateway implements OnGatewayConnection, OnGatewayDisconnect 
 
     client.join(meetingId);
     const participant = await this.meetingsService.addParticipant(meetingId, displayName, role, client.id);
+    if (role === 'host') {
+      try {
+        await this.meetingsService.startMeeting(meetingId);
+      } catch (err) {
+        this.logger.warn(`Failed to mark meeting as active for ${meetingId}: ${String(err)}`);
+      }
+    }
 
     this.socketMap.set(client.id, { meetingId, displayName, role, participantId: participant.id });
 
@@ -221,12 +228,17 @@ export class MeetingGateway implements OnGatewayConnection, OnGatewayDisconnect 
   }
 
   @SubscribeMessage('host-end-meeting')
-  handleHostEndMeeting(
+  async handleHostEndMeeting(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { meetingId: string },
   ) {
     const info = this.socketMap.get(client.id);
     if (info?.role !== 'host') return;
+    try {
+      await this.meetingsService.endMeeting(data.meetingId);
+    } catch (err) {
+      this.logger.error(`Failed to end meeting ${data.meetingId}: ${String(err)}`);
+    }
     this.server.to(data.meetingId).emit('meeting-ended');
   }
 

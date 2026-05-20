@@ -9,7 +9,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configuredOrigins = process.env.FRONTEND_URL
     ? process.env.FRONTEND_URL.split(',').map((origin) => origin.trim()).filter(Boolean)
-    : ['http://localhost:3000', 'http://localhost:3002'];
+    : ['http://localhost:3000', 'http://localhost:3002', 'http://localhost:3003'];
 
   app.enableCors({
     origin: configuredOrigins,

@@ -2,7 +2,7 @@
 import { Mic, MicOff, Video, VideoOff, MonitorUp, MonitorOff, Hand, MessageSquare, Users, Layout, PhoneOff, Lock, Unlock, PenTool } from 'lucide-react';
 import { useMeetingStore } from '@/store/meeting.store';
 
-const EMOJIS = ['??', '??', '??', '??', '??', '??', '??', '??'];
+const EMOJIS = ['\u{1F44D}', '\u{2764}\u{FE0F}', '\u{1F602}', '\u{1F62E}', '\u{1F44F}', '\u{1F389}', '\u{1F525}', '\u{1F4AF}'];
 
 interface Props {
   onToggleMute: () => void;
@@ -50,7 +50,7 @@ export default function MeetingControls({
           </button>
 
           <div className="relative">
-            <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="control-btn active text-lg">??</button>
+            <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="control-btn active text-lg">{'\u{1F600}'}</button>
             {showEmojiPicker && (
               <div className="absolute bottom-14 left-1/2 -translate-x-1/2 bg-slate-800 border border-white/10 rounded-xl p-2 flex gap-1.5 shadow-2xl z-50">
                 {EMOJIS.map(e => (
@@ -111,7 +111,7 @@ export default function MeetingControls({
           <button onClick={isSharingScreen ? onStopShare : onShareScreen} className={`control-btn ${isSharingScreen ? 'bg-blue-600 hover:bg-blue-700' : 'active'}`}>{isSharingScreen ? <MonitorOff className="w-5 h-5 text-white" /> : <MonitorUp className="w-5 h-5 text-white" />}</button>
           <button onClick={onToggleHand} className={`control-btn ${handRaised ? 'bg-yellow-500 hover:bg-yellow-600' : 'active'}`}><Hand className="w-5 h-5 text-white" /></button>
           <div className="relative">
-            <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="control-btn active text-lg">??</button>
+            <button onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="control-btn active text-lg">{'\u{1F600}'}</button>
             {showEmojiPicker && (
               <div className="absolute bottom-14 left-1/2 -translate-x-1/2 bg-slate-800 border border-white/10 rounded-xl p-2 grid grid-cols-4 gap-1.5 shadow-2xl z-50">
                 {EMOJIS.map(e => (

@@ -20,6 +20,13 @@ export function useMeeting(meetingId: string, displayName: string, role: string,
   const localStreamRef = useRef<MediaStream | null>(null);
   const store = useMeetingStore();
 
+  const getVideoSender = useCallback((pc: RTCPeerConnection): RTCRtpSender | null => {
+    const byTrack = pc.getSenders().find(s => s.track?.kind === 'video');
+    if (byTrack) return byTrack;
+    const byTransceiver = pc.getTransceivers().find(t => t.receiver?.track?.kind === 'video');
+    return byTransceiver?.sender || null;
+  }, []);
+
   const getOrCreatePC = useCallback((targetId: string): RTCPeerConnection => {
     if (pcsRef.current.has(targetId)) return pcsRef.current.get(targetId)!;
     const pc = new RTCPeerConnection(ICE_SERVERS);
@@ -43,6 +50,11 @@ export function useMeeting(meetingId: string, displayName: string, role: string,
     // Add local tracks
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(t => pc.addTrack(t, localStreamRef.current!));
+      if (!localStreamRef.current.getVideoTracks().length) {
+        pc.addTransceiver('video', { direction: 'sendrecv' });
+      }
+    } else {
+      pc.addTransceiver('video', { direction: 'sendrecv' });
     }
 
     pcsRef.current.set(targetId, pc);
@@ -205,48 +217,94 @@ export function useMeeting(meetingId: string, displayName: string, role: string,
     socketRef.current?.emit('reaction', { meetingId, emoji, senderName: displayName });
   }, [meetingId, displayName, store]);
 
+  const stopScreenShare = useCallback(async () => {
+    try {
+      store.screenStream?.getTracks().forEach(t => t.stop());
+      store.setScreenStream(null);
+      store.setSharingScreen(false);
+      socketRef.current?.emit('screen-share-stopped', { meetingId });
+
+      // Restore camera track
+      if (localStreamRef.current) {
+        const videoTrack = localStreamRef.current.getVideoTracks()[0];
+        if (videoTrack) {
+          pcsRef.current.forEach(pc => {
+            const sender = getVideoSender(pc);
+            if (sender) {
+              sender.replaceTrack(videoTrack).catch(err => {
+                console.error('Failed to restore camera track:', err);
+              });
+            }
+          });
+        } else {
+          console.warn('No camera video track available to restore');
+        }
+      } else {
+        console.warn('Local stream not available for track restoration');
+      }
+    } catch (err) {
+      console.error('Error stopping screen share:', err);
+      toast.error('Error stopping screen share');
+    }
+  }, [meetingId, store, getVideoSender]);
+
   const startScreenShare = useCallback(async () => {
     try {
-      let stream: MediaStream;
+      let stream: MediaStream | null = null;
+      
+      // Try with audio first, then fall back to video only
       try {
         stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-      } catch {
-        stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+      } catch (audioErr) {
+        console.log('Screen share with audio failed, trying video only:', audioErr);
+        try {
+          stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+        } catch (videoErr) {
+          console.error('Screen share failed:', videoErr);
+          const errorMsg = videoErr instanceof DOMException 
+            ? (videoErr.name === 'NotAllowedError' ? 'You denied screen share permission' : videoErr.message)
+            : 'Screen share is unavailable on this browser/device';
+          toast.error(errorMsg);
+          return;
+        }
       }
+
+      if (!stream) {
+        toast.error('Failed to get screen stream');
+        return;
+      }
+
+      const videoTrack = stream.getVideoTracks()[0];
+      if (!videoTrack) {
+        toast.error('No video track in screen stream');
+        stream.getTracks().forEach(t => t.stop());
+        return;
+      }
+
       store.setScreenStream(stream);
       store.setSharingScreen(true);
       socketRef.current?.emit('screen-share-started', { meetingId, displayName });
 
       // Replace video track in all PCs
-      const videoTrack = stream.getVideoTracks()[0];
       pcsRef.current.forEach(pc => {
-        const sender = pc.getSenders().find(s => s.track?.kind === 'video');
-        if (sender) sender.replaceTrack(videoTrack);
+        const sender = getVideoSender(pc);
+        if (sender) {
+          sender.replaceTrack(videoTrack).catch(err => {
+            console.error('Failed to replace video track:', err);
+          });
+        }
       });
 
-      stream.getVideoTracks()[0].onended = () => stopScreenShare();
+      // Handle when user stops sharing from browser
+      videoTrack.onended = async () => {
+        console.log('Screen share ended by user');
+        await stopScreenShare();
+      };
     } catch (err) {
-      toast.error('Screen share is unavailable on this browser/device');
+      console.error('Unexpected error in startScreenShare:', err);
+      toast.error('An unexpected error occurred during screen share');
     }
-  }, [meetingId, displayName, store]);
-
-  const stopScreenShare = useCallback(async () => {
-    store.screenStream?.getTracks().forEach(t => t.stop());
-    store.setScreenStream(null);
-    store.setSharingScreen(false);
-    socketRef.current?.emit('screen-share-stopped', { meetingId });
-
-    // Restore camera track
-    if (localStreamRef.current) {
-      const videoTrack = localStreamRef.current.getVideoTracks()[0];
-      if (videoTrack) {
-        pcsRef.current.forEach(pc => {
-          const sender = pc.getSenders().find(s => s.track?.kind === 'video');
-          if (sender) sender.replaceTrack(videoTrack);
-        });
-      }
-    }
-  }, [meetingId, store]);
+  }, [meetingId, displayName, store, stopScreenShare, getVideoSender]);
 
   const muteParticipant = useCallback((targetSocketId: string, mute: boolean) => {
     socketRef.current?.emit('host-mute-participant', { meetingId, targetSocketId, mute });
