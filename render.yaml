@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: tst-meet-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: PORT
+        value: 3001
+      - key: JWT_EXPIRY
+        value: 24h
+      - key: DATABASE_PATH
+        value: /opt/render/project/src/data/tst-meet.db
+      - key: FRONTEND_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+    disk:
+      name: tst-meet-sqlite
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1
