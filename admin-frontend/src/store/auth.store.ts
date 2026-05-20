@@ -7,7 +7,7 @@ interface AuthState {
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  checkAuth: () => void;
+  checkAuth: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({

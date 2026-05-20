@@ -7,7 +7,6 @@ import { Video, Shield, Zap, Users, Lock, Globe } from 'lucide-react';
 export default function HomePage() {
   const router = useRouter();
   const [code, setCode] = useState('');
-  const adminUrl = process.env.NEXT_PUBLIC_ADMIN_URL || 'http://localhost:3003/admin/login';
 
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,17 +16,13 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 flex flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between px-8 py-5">
+      <header className="flex items-center px-8 py-5">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
             <Video className="w-5 h-5 text-white" />
           </div>
           <span className="text-xl font-bold text-white">TST Meet</span>
         </div>
-        <button onClick={() => window.location.href = adminUrl}
-          className="text-slate-400 hover:text-white text-sm transition-colors px-4 py-2 rounded-lg hover:bg-white/5">
-          Admin Login
-        </button>
       </header>
 
       {/* Hero */}
