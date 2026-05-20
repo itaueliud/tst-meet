@@ -88,7 +88,7 @@ export default function Whiteboard({ onDraw, onExternalDraw, onClear, onClose }:
   };
 
   return (
-    <div className="sidebar animate-fade-in flex flex-col" style={{ width: '400px' }}>
+    <div className="sidebar animate-fade-in flex flex-col lg:w-[400px]">
       <div className="flex items-center justify-between p-3 border-b border-white/10">
         <h3 className="font-semibold text-white">Whiteboard</h3>
         <div className="flex items-center gap-1">

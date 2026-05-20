@@ -97,6 +97,7 @@ export function useMeeting(meetingId: string, displayName: string, role: string,
     });
 
     socket.on('reaction', (data) => {
+      if (data.socketId === store.mySocketId) return;
       const id = uuidv4();
       store.addReaction({ id, ...data });
       setTimeout(() => store.removeReaction(id), 2500);
@@ -198,12 +199,20 @@ export function useMeeting(meetingId: string, displayName: string, role: string,
   }, [meetingId, displayName, role]);
 
   const sendReaction = useCallback((emoji: string) => {
+    const id = uuidv4();
+    store.addReaction({ id, emoji, senderName: displayName, socketId: store.mySocketId || 'local' });
+    setTimeout(() => store.removeReaction(id), 2500);
     socketRef.current?.emit('reaction', { meetingId, emoji, senderName: displayName });
-  }, [meetingId, displayName]);
+  }, [meetingId, displayName, store]);
 
   const startScreenShare = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      } catch {
+        stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+      }
       store.setScreenStream(stream);
       store.setSharingScreen(true);
       socketRef.current?.emit('screen-share-started', { meetingId, displayName });
@@ -217,7 +226,7 @@ export function useMeeting(meetingId: string, displayName: string, role: string,
 
       stream.getVideoTracks()[0].onended = () => stopScreenShare();
     } catch (err) {
-      toast.error('Screen share failed');
+      toast.error('Screen share is unavailable on this browser/device');
     }
   }, [meetingId, displayName, store]);
 

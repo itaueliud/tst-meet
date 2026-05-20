@@ -34,6 +34,7 @@ body {
   overflow: hidden;
   position: relative;
   aspect-ratio: 16/9;
+  min-height: 170px;
 }
 
 .video-tile video {
@@ -98,3 +99,22 @@ select {
   to { opacity: 0; transform: translateY(-100px) scale(1.5); }
 }
 .emoji-reaction { animation: emoji-float 2s ease-out forwards; }
+
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 100%;
+    border-left: none;
+  }
+
+  .video-grid.grid-2,
+  .video-grid.grid-4,
+  .video-grid.grid-6,
+  .video-grid.grid-9 {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+
+  .video-tile {
+    min-height: 220px;
+  }
+}

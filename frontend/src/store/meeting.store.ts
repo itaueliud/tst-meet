@@ -82,7 +82,7 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
   participants: [], messages: [], reactions: [], isLocked: false,
   isMuted: false, isCameraOff: false, handRaised: false, isSharingScreen: false,
   view: 'grid', pinnedParticipant: null, localStream: null, screenStream: null,
-  peerStreams: new Map(), showChat: true, showParticipants: false, showWhiteboard: false,
+  peerStreams: new Map(), showChat: false, showParticipants: false, showWhiteboard: false,
   unreadMessages: 0,
 
   setMeeting: (id, title, role, name) => set({ meetingId: id, meetingTitle: title, role, displayName: name }),
@@ -116,6 +116,6 @@ export const useMeetingStore = create<MeetingState>((set, get) => ({
     participants: [], messages: [], reactions: [], isLocked: false,
     isMuted: false, isCameraOff: false, handRaised: false, isSharingScreen: false,
     view: 'grid', pinnedParticipant: null, localStream: null, screenStream: null,
-    peerStreams: new Map(), showChat: true, showParticipants: false, showWhiteboard: false, unreadMessages: 0,
+    peerStreams: new Map(), showChat: false, showParticipants: false, showWhiteboard: false, unreadMessages: 0,
   }),
 }));

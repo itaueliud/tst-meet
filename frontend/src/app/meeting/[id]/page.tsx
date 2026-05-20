@@ -91,7 +91,7 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
       </div>
 
       {/* Main area */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
         {/* Video grid */}
         <div className="flex-1 p-3 overflow-hidden">
           {store.view === 'grid' ? (
@@ -178,25 +178,31 @@ export default function MeetingPage({ params }: { params: { id: string } }) {
 
         {/* Sidebars */}
         {store.showWhiteboard && (
-          <Whiteboard
-            onDraw={meeting.sendWhiteboardDraw}
-            onExternalDraw={meeting.onWhiteboardDraw}
-            onClear={meeting.clearWhiteboard}
-            onClose={() => store.setShowWhiteboard(false)}
-          />
+          <div className="absolute inset-0 z-40 lg:static lg:inset-auto lg:z-auto">
+            <Whiteboard
+              onDraw={meeting.sendWhiteboardDraw}
+              onExternalDraw={meeting.onWhiteboardDraw}
+              onClear={meeting.clearWhiteboard}
+              onClose={() => store.setShowWhiteboard(false)}
+            />
+          </div>
         )}
         {store.showParticipants && (
-          <ParticipantsSidebar
-            onClose={() => store.setShowParticipants(false)}
-            onMute={meeting.muteParticipant}
-            onRemove={meeting.removeParticipant}
-          />
+          <div className="absolute inset-0 z-40 lg:static lg:inset-auto lg:z-auto">
+            <ParticipantsSidebar
+              onClose={() => store.setShowParticipants(false)}
+              onMute={meeting.muteParticipant}
+              onRemove={meeting.removeParticipant}
+            />
+          </div>
         )}
         {store.showChat && (
-          <ChatSidebar
-            onSend={meeting.sendMessage}
-            onClose={() => store.setShowChat(false)}
-          />
+          <div className="absolute inset-0 z-40 lg:static lg:inset-auto lg:z-auto">
+            <ChatSidebar
+              onSend={meeting.sendMessage}
+              onClose={() => store.setShowChat(false)}
+            />
+          </div>
         )}
       </div>
 
