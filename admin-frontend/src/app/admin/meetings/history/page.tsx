@@ -24,7 +24,11 @@ export default function MeetingHistoryPage() {
       const res = await api.get('/meetings/history');
       setMeetings(res.data);
       setFiltered(res.data);
-    } finally { setLoading(false); }
+    } catch {
+      toast.error('Failed to load meeting history');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const deleteMeeting = async (id: string, title: string) => {
@@ -33,11 +37,13 @@ export default function MeetingHistoryPage() {
       await api.delete(`/meetings/${id}`);
       toast.success('Meeting deleted');
       load();
-    } catch { toast.error('Failed to delete meeting'); }
+    } catch {
+      toast.error('Failed to delete meeting');
+    }
   };
 
   const getDuration = (m: any) => {
-    if (!m.startedAt || !m.endedAt) return '—';
+    if (!m.startedAt || !m.endedAt) return '-';
     const dur = intervalToDuration({ start: new Date(m.startedAt), end: new Date(m.endedAt) });
     return formatDuration(dur, { format: ['hours', 'minutes'] }) || '< 1 min';
   };
@@ -59,7 +65,7 @@ export default function MeetingHistoryPage() {
 
       {loading ? (
         <div className="space-y-3">
-          {[1,2,3].map(i => <div key={i} className="h-20 bg-white/5 rounded-xl animate-pulse" />)}
+          {[1, 2, 3].map(i => <div key={i} className="h-20 bg-white/5 rounded-xl animate-pulse" />)}
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-20">
@@ -67,56 +73,99 @@ export default function MeetingHistoryPage() {
           <h3 className="text-slate-400 font-medium">{search ? 'No results found' : 'No completed meetings'}</h3>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-white/10">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-white/10 bg-white/5">
-                <th className="text-left text-xs text-slate-400 font-semibold uppercase tracking-wide px-4 py-3">Meeting</th>
-                <th className="text-left text-xs text-slate-400 font-semibold uppercase tracking-wide px-4 py-3 hidden md:table-cell">Date</th>
-                <th className="text-left text-xs text-slate-400 font-semibold uppercase tracking-wide px-4 py-3 hidden lg:table-cell">Duration</th>
-                <th className="text-left text-xs text-slate-400 font-semibold uppercase tracking-wide px-4 py-3 hidden lg:table-cell">Participants</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {filtered.map(m => (
-                <tr key={m.id} className="hover:bg-white/5 transition-colors">
-                  <td className="px-4 py-3">
-                    <div className="text-white text-sm font-medium">{m.title}</div>
-                    <div className="text-slate-500 text-xs font-mono">{m.id.slice(0, 8)}</div>
-                  </td>
-                  <td className="px-4 py-3 hidden md:table-cell">
-                    <div className="text-slate-300 text-sm">{format(new Date(m.endedAt || m.createdAt), 'MMM d, yyyy')}</div>
-                    <div className="text-slate-500 text-xs">{format(new Date(m.endedAt || m.createdAt), 'HH:mm')}</div>
-                  </td>
-                  <td className="px-4 py-3 hidden lg:table-cell">
-                    <div className="flex items-center gap-1.5 text-slate-300 text-sm">
-                      <Clock className="w-3.5 h-3.5 text-slate-500" /> {getDuration(m)}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 hidden lg:table-cell">
-                    <div className="flex items-center gap-1.5 text-slate-300 text-sm">
-                      <Users className="w-3.5 h-3.5 text-slate-500" />
-                      {m.participants?.length || 0}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2 justify-end">
-                      <button onClick={() => router.push(`/admin/meetings/${m.id}`)}
-                        className="p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => deleteMeeting(m.id, m.title)}
-                        className="p-1.5 rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
+        <>
+          <div className="grid gap-3 md:hidden">
+            {filtered.map(m => (
+              <div key={m.id} className="rounded-xl border border-white/10 bg-white/5 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-white text-sm font-semibold truncate">{m.title}</div>
+                    <div className="text-slate-500 text-xs font-mono mt-1">{m.id.slice(0, 8)}</div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button onClick={() => router.push(`/admin/meetings/${m.id}`)}
+                      className="p-2 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => deleteMeeting(m.id, m.title)}
+                      className="p-2 rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                  <div className="rounded-lg bg-slate-900/40 p-2">
+                    <div className="text-slate-500">Date</div>
+                    <div className="text-slate-300 mt-0.5">{format(new Date(m.endedAt || m.createdAt), 'MMM d, yyyy')}</div>
+                  </div>
+                  <div className="rounded-lg bg-slate-900/40 p-2">
+                    <div className="text-slate-500">Time</div>
+                    <div className="text-slate-300 mt-0.5">{format(new Date(m.endedAt || m.createdAt), 'HH:mm')}</div>
+                  </div>
+                  <div className="rounded-lg bg-slate-900/40 p-2">
+                    <div className="text-slate-500">Duration</div>
+                    <div className="text-slate-300 mt-0.5">{getDuration(m)}</div>
+                  </div>
+                  <div className="rounded-lg bg-slate-900/40 p-2">
+                    <div className="text-slate-500">Participants</div>
+                    <div className="text-slate-300 mt-0.5">{m.participants?.length || 0}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden md:block overflow-hidden rounded-xl border border-white/10">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-white/10 bg-white/5">
+                  <th className="text-left text-xs text-slate-400 font-semibold uppercase tracking-wide px-4 py-3">Meeting</th>
+                  <th className="text-left text-xs text-slate-400 font-semibold uppercase tracking-wide px-4 py-3 hidden md:table-cell">Date</th>
+                  <th className="text-left text-xs text-slate-400 font-semibold uppercase tracking-wide px-4 py-3 hidden lg:table-cell">Duration</th>
+                  <th className="text-left text-xs text-slate-400 font-semibold uppercase tracking-wide px-4 py-3 hidden lg:table-cell">Participants</th>
+                  <th className="px-4 py-3" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {filtered.map(m => (
+                  <tr key={m.id} className="hover:bg-white/5 transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="text-white text-sm font-medium">{m.title}</div>
+                      <div className="text-slate-500 text-xs font-mono">{m.id.slice(0, 8)}</div>
+                    </td>
+                    <td className="px-4 py-3 hidden md:table-cell">
+                      <div className="text-slate-300 text-sm">{format(new Date(m.endedAt || m.createdAt), 'MMM d, yyyy')}</div>
+                      <div className="text-slate-500 text-xs">{format(new Date(m.endedAt || m.createdAt), 'HH:mm')}</div>
+                    </td>
+                    <td className="px-4 py-3 hidden lg:table-cell">
+                      <div className="flex items-center gap-1.5 text-slate-300 text-sm">
+                        <Clock className="w-3.5 h-3.5 text-slate-500" /> {getDuration(m)}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 hidden lg:table-cell">
+                      <div className="flex items-center gap-1.5 text-slate-300 text-sm">
+                        <Users className="w-3.5 h-3.5 text-slate-500" />
+                        {m.participants?.length || 0}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2 justify-end">
+                        <button onClick={() => router.push(`/admin/meetings/${m.id}`)}
+                          className="p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => deleteMeeting(m.id, m.title)}
+                          className="p-1.5 rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );
